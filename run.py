@@ -34,6 +34,10 @@ def cid_route(cid):
             return gen_qrcode("201820192001548")
         elif int(cid) == 4:
             return gen_qrcode("201820192001539")
+        elif int(cid) == 5:
+            return gen_qrcode("201820192001535")
+        elif int(cid) == 6:
+            return gen_qrcode("201820192001206")
 
         return "非法请求 2"
     except ValueError or TypeError:
