@@ -60,7 +60,7 @@ def gen_qrcode(cid: str):
     t = raw_header.headers['Date']
     t = time.strptime(t, '%a, %d %b %Y %H:%M:%S %Z')
     t = time.mktime(t)
-    t = int(t * 1000) + 28800
+    t = int(int(t) + 28800) * 1000
 
     qrc = {
         "course_id": "%s" % cid,
