@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import send_file
+from flask import send_file, make_response, Response
 import requests
 import time
 import json
@@ -10,37 +10,57 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return '某不知用途的小工具，版权归雪糕所有'
+    return '某不知用途的小工具'
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return 'favicon.ico'
 
 
 @app.route('/<cid>')
-def gen_qrcode(cid):
+def cid_route(cid):
     cid = ''.join(list(filter(str.isdigit, cid)))
 
     if cid is None:
-        return ""
+        return "非法请求 1"
 
     try:
-        if int(cid) <= 201820190000000 or int(cid) > 201820199999999:
-            return ""
-    except ValueError or TypeError:
-        return "非法请求"
+        if int(cid) == 1:
+            return gen_qrcode("201820192001399")
+        elif int(cid) == 2:
+            return gen_qrcode("201820192001536")
+        elif int(cid) == 3:
+            return gen_qrcode("201820192001548")
+        elif int(cid) == 4:
+            return gen_qrcode("201820192001539")
 
+        return "非法请求 2"
+    except ValueError or TypeError:
+        return "非法请求 3"
+
+
+def gen_qrcode(cid: str):
+    """
+    该函数用于针对不同课程返回处理好的响应头
+    :param cid: 传入课程编号，具体可以查看数据库记录
+    :return:返回响应头+数据
+    """
     try:
         raw_header = get_raw_header()
     except requests.ConnectionError:
-        return "连接站点失败，请联系管理员"
+        return "上游连接站点失败"
 
     if raw_header == -1:
-        return "站点超时，请联系管理员"
+        return "站点超时"
 
     if raw_header.status_code >= 400:
-        return "响应头异常，请联系管理员"
+        return "上游响应头异常"
 
     t = raw_header.headers['Date']
     t = time.strptime(t, '%a, %d %b %Y %H:%M:%S %Z')
     t = time.mktime(t)
-    t = int(t * 1000)
+    t = int(t * 1000) + 28800
 
     qrc = {
         "course_id": "%s" % cid,
@@ -64,7 +84,15 @@ def gen_qrcode(cid):
     img.save(byte_io, 'PNG')
     byte_io.seek(0)
 
-    return send_file(byte_io, mimetype='image/png')
+    img = byte_io.getvalue()
+
+    resp: Response = make_response(img)
+
+    resp.headers['Refresh'] = 3
+    resp.headers['Server'] = 'xEngine-IceCream'
+    resp.headers['Content-Type'] = 'image/png'
+
+    return resp
 
 
 def get_raw_header():
